@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Meeting room for video conferencing with real-time chat">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/style.css">
+  <title>Meeting Room</title>
+</head>
+<body>
+  <header>
+    <h1>Meeting Room</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="profile.html">Profile</a>
+      <a href="logout.html" id="sign-out-btn">Sign Out</a>
+    </nav>
+  </header>
+
+  <main class="meeting-container">
+    <div class="meeting-room">
+      <div class="video-container" id="video-container"></div>
+      <div class="chat-box" id="chat-box"></div>
+      <div class="chat-controls">
+        <input type="text" id="chat-input" placeholder="Type a message">
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/meeting.js"></script>
+</body>
+</html>
