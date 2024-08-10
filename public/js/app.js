@@ -6,12 +6,13 @@ import { getDatabase } from 'firebase/database';
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyC_v4UWFhJlXjrnQo26ZKqgx6n7cxDxNEY",
+    authDomain: "bharat-conferencing.firebaseapp.com",
+    projectId: "bharat-conferencing",
+    storageBucket: "bharat-conferencing.appspot.com",
+    messagingSenderId: "243033188049",
+    appId: "1:243033188049:web:27ac639d6b6687dc0dc7f0",
+    measurementId: "G-5F8MG73JT8"
 };
 
 // Initialize Firebase
