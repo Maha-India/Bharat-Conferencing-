@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase/auth';
-import { getDatabase, ref, set, onValue } from 'firebase/database';
+import { getDatabase, ref, set, onValue, push, remove } from 'firebase/database';
 
 // Firebase configuration and initialization (imported or set up elsewhere)
 const auth = getAuth();
@@ -12,14 +12,15 @@ const chatInput = document.getElementById('chat-input');
 const sendButton = document.getElementById('send-button');
 const meetingId = new URLSearchParams(window.location.search).get('meetingId');
 let localStream;
-let remoteStream;
+let localPeerConnection;
+let remotePeerConnections = {};
+let dataChannel;
 
 // Create or join a meeting
 function createOrJoinMeeting() {
   if (meetingId) {
     joinMeeting(meetingId);
   } else {
-    // Create a new meeting ID
     const newMeetingId = generateMeetingId();
     window.location.search = `?meetingId=${newMeetingId}`;
     set(ref(database, 'meetings/' + newMeetingId), {
@@ -42,13 +43,27 @@ function joinMeeting(id) {
   onValue(meetingRef, (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      // Add the participant to the list
       if (!data.participants.includes(auth.currentUser.email)) {
         data.participants.push(auth.currentUser.email);
         set(meetingRef, data);
       }
       setupVideoStream();
     }
+  });
+
+  const signalingRef = ref(database, 'meetings/' + id + '/signaling');
+  
+  onValue(signalingRef, (snapshot) => {
+    snapshot.forEach(async (childSnapshot) => {
+      const message = childSnapshot.val();
+      if (message && message.type === 'offer') {
+        await handleOffer(message.offer, message.from);
+      } else if (message && message.type === 'answer') {
+        await handleAnswer(message.answer, message.from);
+      } else if (message && message.type === 'ice') {
+        await handleIceCandidate(message.ice, message.from);
+      }
+    });
   });
 }
 
@@ -60,10 +75,89 @@ async function setupVideoStream() {
   localVideo.autoplay = true;
   videoContainer.appendChild(localVideo);
 
-  // Placeholder for WebRTC connection setup
-  // You need to implement WebRTC signaling to handle remote video stream
+  localPeerConnection = new RTCPeerConnection();
+  
+  localStream.getTracks().forEach(track => {
+    localPeerConnection.addTrack(track, localStream);
+  });
 
-  // For example, use Firebase Realtime Database or another signaling server
+  localPeerConnection.ontrack = (event) => {
+    if (event.streams && event.streams[0]) {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.srcObject = event.streams[0];
+      remoteVideo.autoplay = true;
+      videoContainer.appendChild(remoteVideo);
+    }
+  };
+
+  localPeerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      sendSignalingMessage('ice', event.candidate);
+    }
+  };
+
+  await createAndSendOffer();
+}
+
+// Create and send an offer
+async function createAndSendOffer() {
+  const offer = await localPeerConnection.createOffer();
+  await localPeerConnection.setLocalDescription(offer);
+  sendSignalingMessage('offer', offer);
+}
+
+// Handle offer received from another peer
+async function handleOffer(offer, from) {
+  const peerConnection = new RTCPeerConnection();
+  remotePeerConnections[from] = peerConnection;
+
+  peerConnection.ontrack = (event) => {
+    if (event.streams && event.streams[0]) {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.srcObject = event.streams[0];
+      remoteVideo.autoplay = true;
+      videoContainer.appendChild(remoteVideo);
+    }
+  };
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      sendSignalingMessage('ice', event.candidate, from);
+    }
+  };
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  sendSignalingMessage('answer', answer, from);
+}
+
+// Handle answer received from another peer
+async function handleAnswer(answer, from) {
+  const peerConnection = remotePeerConnections[from];
+  if (peerConnection) {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  }
+}
+
+// Handle ICE candidate received from another peer
+async function handleIceCandidate(ice, from) {
+  const peerConnection = remotePeerConnections[from];
+  if (peerConnection) {
+    await peerConnection.addIceCandidate(new RTCIceCandidate(ice));
+  }
+}
+
+// Send a signaling message to Firebase
+function sendSignalingMessage(type, payload, to) {
+  const signalingRef = ref(database, 'meetings/' + meetingId + '/signaling');
+  const messageRef = push(signalingRef);
+  set(messageRef, {
+    type,
+    ...payload,
+    from: auth.currentUser.email,
+    to: to || null,
+  });
 }
 
 // Handle chat messages
@@ -71,7 +165,7 @@ sendButton.addEventListener('click', () => {
   const message = chatInput.value;
   if (message) {
     const messageRef = ref(database, 'meetings/' + meetingId + '/messages');
-    set(messageRef, {
+    push(messageRef, {
       user: auth.currentUser.email,
       message: message,
       timestamp: Date.now(),
