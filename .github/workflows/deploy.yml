@@ -3,7 +3,7 @@ name: Deploy to Firebase
 on:
   push:
     branches:
-      - main # Change to your default branch if different
+      - main
 
 jobs:
   deploy:
@@ -16,20 +16,17 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # Use the appropriate Node.js version
+        node-version: '20'
 
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
 
-    - name: Authenticate with Firebase
-      run: echo "${{ secrets.FIREBASE_TOKEN }}" | firebase login:ci --token
+    - name: Set up Firebase service account
+      run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > ${HOME}/firebase-key.json
 
-    - name: Build and Deploy
+    - name: Deploy to Firebase
       run: |
-        # Install dependencies
-        npm install
-
-        # Deploy to Firebase
-        firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
+        firebase use --add --project bharat-conferencing
+        firebase deploy --only hosting --token ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
       env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
