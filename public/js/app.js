@@ -5,7 +5,6 @@ import { getDatabase } from 'firebase/database';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
   apiKey: "AIzaSyC_v4UWFhJlXjrnQo26ZKqgx6n7cxDxNEY",
     authDomain: "bharat-conferencing.firebaseapp.com",
     projectId: "bharat-conferencing",
