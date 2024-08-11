@@ -3,7 +3,7 @@ name: Deploy to Firebase
 on:
   push:
     branches:
-      - main
+      - main # Adjust this to your main branch
 
 jobs:
   deploy:
@@ -24,7 +24,7 @@ jobs:
     - name: Set up Firebase service account
       run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > ${HOME}/firebase-key.json
 
-    - name: Deploy to Firebase
+    - name: Authenticate with Firebase
       run: |
         firebase use --add --project bharat-conferencing
         firebase deploy --only hosting --token ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
