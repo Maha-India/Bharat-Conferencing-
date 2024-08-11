@@ -1,5 +1,5 @@
 {
-  "name": "your-project-name",
+  "name": "Bharat Conferencing",
   "version": "1.0.0",
   "description": "A web app using Firebase for authentication and hosting.",
   "main": "index.js",
@@ -14,6 +14,6 @@
   "engines": {
     "node": "20.x"
   },
-  "author": "",
+  "author": "Maha India",
   "license": "MIT"
 }
